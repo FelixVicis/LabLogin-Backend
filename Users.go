@@ -19,13 +19,22 @@ func UserState(res http.ResponseWriter, req *http.Request, params httprouter.Par
 		Domain:domain,
 		ID:uuid,
 	})
-	
-	// Output result
+	// If student doesn't exist...
 	if retErr != nil {
-		fmt.Fprint(res,`{"result":"failure"}`)
+		fmt.Fprint(res,`{"result":"no user"}`)
 		return
 	}
-	fmt.Fprint(res,`{"result":"success"}`)
+	// Check if student is logged in.
+	l := LoginRecord{}
+	retErr2 := retrievable.GetEntity(ctx, &l, StorageInfo{
+		Domain:domain,
+		ID:s.MostRecent,
+	})
+	if retErr2 != nil {
+		fmt.Fprint(res,`{"result":"logged off"}`)
+		return
+	}
+	fmt.Fprint(res,`{"result":"logged in"}`)
 }
 
 func RegisterStudent(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
