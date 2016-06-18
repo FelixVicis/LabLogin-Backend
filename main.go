@@ -8,7 +8,6 @@ import (
 func init() {
 	r := httprouter.New()
 	http.Handle("/", r)
-	http.Handle("/", r)
 	r.GET("/", index) // <user> Root page
 }
 
