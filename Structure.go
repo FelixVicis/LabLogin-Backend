@@ -3,6 +3,7 @@ package main
 import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"time"
 )
 
 /*
@@ -12,15 +13,6 @@ filename.go by Allen J. Mills
     Description
 */
 
-import (
-	"time"
-)
-
-var (
-	StudentTable     = "Student"
-	LoginRecordTable = "LoginRecord"
-)
-
 type StorageInfo struct {
 	Domain string
 	ID     interface{}
@@ -28,6 +20,7 @@ type StorageInfo struct {
 
 type Student struct { // Key: UUID
 	First, Last, UUID string
+	MostRecent int64
 }
 
 func (s *Student) Key(ctx context.Context, k interface{}) *datastore.Key {

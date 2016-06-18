@@ -7,4 +7,7 @@ GBL_GlobalVariables.go by Allen J. Mills
     This file holds all global variables.
 */
 
-const ()
+const (
+	StudentTable     = "Student"
+	LoginRecordTable = "LoginRecord"
+)

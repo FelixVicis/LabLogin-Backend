@@ -8,15 +8,19 @@ import (
 func init() {
 	r := httprouter.New()
 	http.Handle("/", r)
-	r.GET("/", index)
-	r.GET("/doc", documentation)
-	r.POST("/newClient", registerClient)
+	r.GET("/", Index)
+	r.GET("/doc", Documentation)
+	r.POST("/state",UserState)
+	r.POST("/newStudent",RegisterStudent)
+	r.POST("/newClient", RegisterClient)
+	r.POST("/loginUser", LoginUser)
+	r.POST("/logoutUser", LogoutUser)
 }
 
-func index(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func Index(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	ServeTemplateWithParams(res, "index.html", nil)
 }
 
-func documentation(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func Documentation(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	ServeTemplateWithParams(res, "documentation.html", nil)
 }
