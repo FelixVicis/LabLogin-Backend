@@ -8,7 +8,9 @@ import (
 func init() {
 	r := httprouter.New()
 	http.Handle("/", r)
-	r.GET("/", index) // <user> Root page
+	r.GET("/", index)
+	r.GET("/doc", documentation)
+	r.POST("/newClient", registerClient)
 }
 
 func index(res http.ResponseWriter, req *http.Request, params httprouter.Params) {

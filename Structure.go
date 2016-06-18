@@ -21,22 +21,28 @@ var (
 	LoginRecordTable = "LoginRecord"
 )
 
-type Student struct { // UUID
+type StorageInfo struct {
+	Domain string
+	ID     interface{}
+}
+
+type Student struct { // Key: UUID
 	First, Last, UUID string
 }
 
 func (s *Student) Key(ctx context.Context, k interface{}) *datastore.Key {
-	return datastore.NewKey(ctx, StudentTable, "", k.(int64), nil)
+	si := k.(StorageInfo)
+	return datastore.NewKey(ctx, si.Domain+"-"+StudentTable, si.ID.(string), 0, nil)
 }
 
-type LoginRecord struct { // in.string - uuid
-	UUID     string
-	In, Out  time.Time
-	LoggedIn bool
+type LoginRecord struct { // Key: in.string - uuid
+	UUID    string
+	In, Out time.Time
 }
 
 func (l *LoginRecord) Key(ctx context.Context, k interface{}) *datastore.Key {
-	return datastore.NewKey(ctx, LoginRecordTable, k.(string), 0, nil)
+	si := k.(StorageInfo)
+	return datastore.NewKey(ctx, si.Domain+"-"+LoginRecordTable, "", si.ID.(int64), nil)
 }
 
 ////////////////////////////////////
@@ -46,6 +52,5 @@ func NewRecord(uuid string) *LoginRecord {
 	r := &LoginRecord{}
 	r.UUID = uuid
 	r.In = time.Now()
-	r.LoggedIn = true
 	return r
 }
