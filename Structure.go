@@ -1,7 +1,7 @@
 package main
 
-import(
-    "golang.org/x/net/context"
+import (
+	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -17,20 +17,16 @@ import (
 )
 
 var (
-	StudentTable = "Student"
+	StudentTable     = "Student"
 	LoginRecordTable = "LoginRecord"
 )
-
-type Client struct { // ID
-	ID string
-}
 
 type Student struct { // UUID
 	First, Last, UUID string
 }
 
-func (s *Student) Key(ctx context.Context,k interface{})(*datastore.Key){
-	return datastore.NewKey(ctx, StudentTable, "", k.(int64), nil)	
+func (s *Student) Key(ctx context.Context, k interface{}) *datastore.Key {
+	return datastore.NewKey(ctx, StudentTable, "", k.(int64), nil)
 }
 
 type LoginRecord struct { // in.string - uuid
@@ -39,8 +35,8 @@ type LoginRecord struct { // in.string - uuid
 	LoggedIn bool
 }
 
-func (l *LoginRecord) Key(ctx context.Context,k interface{})(*datastore.Key){
-	return datastore.NewKey(ctx, LoginRecordTable, k.(string), 0, nil)	
+func (l *LoginRecord) Key(ctx context.Context, k interface{}) *datastore.Key {
+	return datastore.NewKey(ctx, LoginRecordTable, k.(string), 0, nil)
 }
 
 ////////////////////////////////////
