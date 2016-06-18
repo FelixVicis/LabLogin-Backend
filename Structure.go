@@ -20,7 +20,15 @@ type Student struct { // UUID
 }
 
 type LoginRecord struct { // in.string - uuid
-	UUID      string
-	In, Out   time.Time
-	LoggedOut bool
+	UUID     string
+	In, Out  time.Time
+	LoggedIn bool
+}
+
+func NewRecord(uuid string) *LoginRecord {
+	r := &LoginRecord{}
+	r.UUID = uuid
+	r.In = time.Now()
+	r.LoggedIn = true
+	return r
 }
