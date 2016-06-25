@@ -101,7 +101,8 @@ func RegisterStudent(res http.ResponseWriter, req *http.Request, params httprout
 }
 
 func LoginUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	ctx := appengine.NewContext(req) // Make Context
+	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
+	ctx := appengine.NewContext(req)                     // Make Context
 	// Get parameter UUID
 	uuid := req.FormValue("UUID")
 	if uuid == "" {
@@ -162,7 +163,8 @@ func LoginUser(res http.ResponseWriter, req *http.Request, params httprouter.Par
 	fmt.Fprint(res, `{"result":"success"}`)
 }
 func LogoutUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	ctx := appengine.NewContext(req) // Make Context
+	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
+	ctx := appengine.NewContext(req)                     // Make Context
 	// Get parameter UUID
 	uuid := req.FormValue("UUID")
 	if uuid == "" {
