@@ -18,9 +18,12 @@ type StorageInfo struct {
 	ID     interface{}
 }
 
+// Students
+//------------------------
+
 type Student struct { // Key: UUID
 	First, Last, UUID string
-	MostRecent int64
+	MostRecent        int64
 }
 
 func (s *Student) Key(ctx context.Context, k interface{}) *datastore.Key {
