@@ -15,12 +15,6 @@ func init() {
 	r.POST("/newClient", RegisterClient)
 	r.POST("/loginUser", LoginUser)
 	r.POST("/logoutUser", LogoutUser)
-	//
-	r.GET("/state", UserState)
-	r.GET("/newStudent", RegisterStudent)
-	r.GET("/newClient", RegisterClient)
-	r.GET("/loginUser", LoginUser)
-	r.GET("/logoutUser", LogoutUser)
 }
 
 func Index(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
