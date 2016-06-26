@@ -8,6 +8,6 @@ GBL_GlobalVariables.go by Allen J. Mills
 */
 
 const (
-	StudentTable     = "Student"
-	LoginRecordTable = "LoginRecord"
+	UsersTable   = "Users"
+	RecordsTable = "Records"
 )

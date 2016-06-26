@@ -8,10 +8,10 @@ filename.go by Allen J. Mills
 */
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/julienschmidt/httprouter"
-	"net/http"
 	"github.com/nu7hatch/gouuid"
+	"net/http"
 )
 
 func NewUUID() string {
@@ -21,5 +21,7 @@ func NewUUID() string {
 
 func RegisterClient(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
-	fmt.Fprint(res,NewUUID())
+	ServeJsonOfStruct(res, JsonOptions{
+		Status: "Success",
+	}, NewUUID())
 }

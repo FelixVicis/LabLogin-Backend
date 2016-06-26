@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 )
@@ -21,4 +23,17 @@ func init() {
 func ServeTemplateWithParams(res http.ResponseWriter, templateName string, params interface{}) {
 	err := tpl.ExecuteTemplate(res, templateName, &params)
 	HandleError(res, err)
+}
+
+type JsonOptions struct {
+	Status, Reason string
+	Code           int
+	Results        interface{}
+}
+
+func ServeJsonOfStruct(res http.ResponseWriter, opt JsonOptions, param interface{}) error {
+	opt.Results = param
+	output, merr := json.Marshal(opt)
+	fmt.Fprint(res, string(output))
+	return merr
 }

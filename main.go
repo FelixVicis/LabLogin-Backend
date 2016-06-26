@@ -9,18 +9,20 @@ func init() {
 	r := httprouter.New()
 	http.Handle("/", r)
 	r.GET("/", Index)
-	r.GET("/doc", Documentation)
-	r.POST("/state", UserState)
-	r.POST("/newStudent", RegisterStudent)
-	r.POST("/newClient", RegisterClient)
-	r.POST("/loginUser", LoginUser)
-	r.POST("/logoutUser", LogoutUser)
+	// User Commands
+	r.POST("/create table user", CreateTableUser)
+	r.POST("/insert into user", CreateUser)
+	r.POST("/drop from user", DropUser)
+	// Client Commands
+	r.POST("/get new client", RegisterClient)
+	// Record Commands
+	r.POST("/select state from record", SelectStateFromRecord)
+	r.POST("/toggle state from record", ToggleStateFromRecord)
+	r.POST("/select all from record", SelectAllFromRecord)
+	r.POST("/select current from record", SelectCurrentFromRecord)
+	r.POST("/drop table record", DropAllFromRecord)
 }
 
 func Index(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	ServeTemplateWithParams(res, "index.html", nil)
-}
-
-func Documentation(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	ServeTemplateWithParams(res, "documentation.html", nil)
 }

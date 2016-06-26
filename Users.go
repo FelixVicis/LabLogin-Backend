@@ -1,219 +1,166 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/Esseh/retrievable"
 	"github.com/julienschmidt/httprouter"
+	"golang.org/x/net/context"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
 	"net/http"
-	"time"
+	// "time"
 )
 
-func UserState(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	ctx := appengine.NewContext(req)                     // Make Context
-	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
-	domain := req.FormValue("Domain")                    // Get Domain
-	uuid := req.FormValue("UUID")                        // Get UUID
-	// Retrieve Student
-	s := Student{}
-	retErr := retrievable.GetFromDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     uuid,
-	}, &s)
-	// If student doesn't exist...
-	if retErr != nil {
-		fmt.Fprint(res, `{"result":"no user"}`)
-		return
-	}
-	// Check if student is logged in.
-	l := LoginRecord{}
-	retErr2 := retrievable.GetFromDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     s.MostRecent,
-	}, &l)
-	if retErr2 == nil && l.Out.IsZero() {
-		fmt.Fprint(res, `{"result":"logged in"}`)
-		return
-	}
-	fmt.Fprint(res, `{"result":"logged off"}`)
-	// if retErr2 != nil {
-	// 	fmt.Fprint(res, `{"result":"logged off"}`)
-	// 	return
-	// }
+type User struct {
+	// Key: UUID
+	First, Last, UUID string
+	MostRecent        int64 `json:"-"`
 }
 
-func RegisterStudent(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	ctx := appengine.NewContext(req)                     // Make Context
+// Implements: Retrivable
+func (u *User) Key(ctx context.Context, k interface{}) *datastore.Key {
+	si := k.(StorageInfo)
+	return datastore.NewKey(ctx, si.LoginDomain+"-"+UsersTable, si.ID.(string), 0, nil)
+}
+
+/////=========================
+// Functions
+/////
+
+func GetUserInfo(req *http.Request) (User, bool) {
+	u := User{}
+	ok := true
+
+	if n := req.FormValue("First"); n != "" {
+		u.First = n
+	} else {
+		ok = false
+	}
+
+	if n := req.FormValue("Last"); n != "" {
+		u.Last = n
+	} else {
+		ok = false
+	}
+
+	if i := req.FormValue("UUID"); i != "" {
+		u.UUID = i
+	} else {
+		ok = false
+	}
+
+	return u, ok
+}
+
+//////----------------
+// Handlers
+/////
+
+func CreateTableUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
+	ServeJsonOfStruct(res, JsonOptions{
+		Status: "Success",
+	}, NewUUID())
+}
+
+func CreateUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
 
-	// Get parameter First
-	first := req.FormValue("First")
-	if first == "" {
-		fmt.Fprint(res, `{"result":"failure","reason":"Missing Parameter First"}`)
-		return
-	}
-	// Get parameter Last
-	last := req.FormValue("Last")
-	if last == "" {
-		fmt.Fprint(res, `{"result":"failure","reason":"Missing Parameter Last"}`)
-		return
-	}
-	// Get parameter UUID
-	uuid := req.FormValue("UUID")
-	if uuid == "" {
-		fmt.Fprint(res, `{"result":"failure","reason":"Missing Parameter UUID"}`)
-		return
-	}
 	// Get parameter Domain
-	domain := req.FormValue("Domain")
-	if domain == "" {
-		fmt.Fprint(res, `{"result":"failure","reason":"Missing Parameter Domain"}`)
+	udomain := req.FormValue("User-Domain")
+	if udomain == "" {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: "Missing User-Domain paramteter",
+			Code:   http.StatusNotAcceptable,
+		}, nil)
 		return
 	}
-	// Check if student already exists.
-	s := Student{}
+
+	uin, ok := GetUserInfo(req)
+	if !ok {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: "Missing User paramteters, check documentation.",
+			Code:   http.StatusNotAcceptable,
+		}, uin)
+		return
+	}
+
+	ctx := appengine.NewContext(req) // Make Context
+
+	// Check if user already exists.
 	retErr := retrievable.GetFromDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     uuid,
-	}, &s)
+		LoginDomain: udomain,
+		ID:          uin.UUID,
+	}, &User{})
 	if retErr == nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"Student Already Exists"}`)
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: "User already registered.",
+			Code:   http.StatusForbidden,
+		}, nil)
 		return
 	}
 
-	// Make student
-	s.First = first
-	s.Last = last
-	s.UUID = uuid
-
-	_, plaErr := retrievable.PlaceInDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     uuid,
-	}, &s)
-	if plaErr != nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"Internal Server Error"}`)
+	_, putErr := retrievable.PlaceInDatastore(ctx, StorageInfo{
+		LoginDomain: udomain,
+		ID:          uin.UUID,
+	}, &uin)
+	if putErr != nil {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: "Internal Services Error.",
+			Code:   http.StatusInternalServerError,
+		}, nil)
 		return
 	}
 
-	// Success
-	fmt.Fprint(res, `{"result":"success"}`)
-
+	ServeJsonOfStruct(res, JsonOptions{
+		Status: "Success",
+	}, nil)
 }
 
-func LoginUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func DropUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
-	ctx := appengine.NewContext(req)                     // Make Context
-	// Get parameter UUID
-	uuid := req.FormValue("UUID")
-	if uuid == "" {
-		fmt.Fprint(res, `{"result":"failure","reason":"Missing Parameter UUID"}`)
-		return
-	}
+
 	// Get parameter Domain
-	domain := req.FormValue("Domain")
-	if domain == "" {
-		fmt.Fprint(res, `{"result":"failure","reason":"Missing Parameter Domain"}`)
-		return
-	}
-	// Get Student
-	s := Student{}
-	retErr := retrievable.GetFromDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     uuid,
-	}, &s)
-	if retErr != nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"user does not exist"}`)
-		return
-	}
-	// Make sure the user is not logged in.
-	l := LoginRecord{}
-	retErr2 := retrievable.GetFromDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     s.MostRecent,
-	}, &l)
-	if retErr2 == nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"user already logged in"}`)
+	udomain := req.FormValue("User-Domain")
+	if udomain == "" {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: "Missing User-Domain paramteter",
+			Code:   http.StatusNotAcceptable,
+		}, nil)
 		return
 	}
 
-	// Log the user in.
-	// Initialize LoginRecord
-	l.In = time.Now()
-	l.UUID = uuid
-	// Place LoginRecord
-	key, plaErr := retrievable.PlaceInDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     int64(0),
-	}, &l)
-	if plaErr != nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"internal server error (1)"}`)
+	uin, _ := GetUserInfo(req)
+	if uin.UUID == "" {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: "Missing UUID parameter.",
+			Code:   http.StatusNotAcceptable,
+		}, nil)
 		return
 	}
 
-	// Make Record ID the user's most recent login record
-	s.MostRecent = key.IntID()
-	_, plaErr2 := retrievable.PlaceInDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     uuid,
-	}, &s)
-	if plaErr2 != nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"internal server error (2)"}`)
-		return
-	}
-	fmt.Fprint(res, `{"result":"success"}`)
-}
-func LogoutUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
-	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
-	ctx := appengine.NewContext(req)                     // Make Context
-	// Get parameter UUID
-	uuid := req.FormValue("UUID")
-	if uuid == "" {
-		fmt.Fprint(res, `{"result":"failure","reason":"Missing Parameter UUID"}`)
-	}
-	// Get parameter Domain
-	domain := req.FormValue("Domain")
-	if domain == "" {
-		fmt.Fprint(res, `{"result":"failure","reason":"Missing Parameter Domain"}`)
-	}
-	// Get Student
-	s := Student{}
-	retErr := retrievable.GetFromDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     uuid,
-	}, &s)
-	if retErr != nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"user does not exist"}`)
-	}
-	// Make sure the user is actually logged in.
-	l := LoginRecord{}
-	retErr2 := retrievable.GetFromDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     s.MostRecent,
-	}, &l)
-	if retErr2 != nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"user is not logged in"}`)
+	ctx := appengine.NewContext(req) // Make Context
+
+	delErr := retrievable.DeleteFromDatastore(ctx, StorageInfo{
+		LoginDomain: udomain,
+		ID:          uin.UUID,
+	}, &uin)
+	if delErr != nil {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: delErr.Error(),
+			Code:   http.StatusInternalServerError,
+		}, nil)
 		return
 	}
 
-	// Log the user out.
-	l.Out = time.Now()
-	_, plaErr := retrievable.PlaceInDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     s.MostRecent,
-	}, &l)
-	if plaErr != nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"internal server error (1)"}`)
-		return
-	}
-
-	s.MostRecent = 0
-	_, plaErr2 := retrievable.PlaceInDatastore(ctx, StorageInfo{
-		Domain: domain,
-		ID:     uuid,
-	}, &s)
-	if plaErr2 != nil {
-		fmt.Fprint(res, `{"result":"failure","reason":"internal server error (2)"}`)
-		return
-	}
-	fmt.Fprint(res, `{"result":"success"}`)
+	ServeJsonOfStruct(res, JsonOptions{
+		Status: "Success",
+	}, nil)
 }
