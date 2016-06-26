@@ -218,7 +218,7 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 
 	ServeJsonOfStruct(res, JsonOptions{
 		Status: "Success",
-	}, "User is Logged out.")
+	}, "User is Logged out")
 }
 
 /////////===================================
