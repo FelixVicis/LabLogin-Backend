@@ -14,7 +14,6 @@ import (
 type User struct {
 	// Key: UUID
 	First, Last, UUID string
-	MostRecent        int64 `json:"-"`
 }
 
 // Implements: Retrivable
