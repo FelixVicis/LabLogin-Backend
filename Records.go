@@ -15,6 +15,7 @@ import (
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -29,7 +30,7 @@ func MakeRecordTable(si StorageInfo) string {
 	return si.Domain + "-" + RecordsTable
 }
 
-// Implements: Retrivable
+// Implements: Retrievable
 func (l *Record) Key(ctx context.Context, k interface{}) *datastore.Key {
 	si := k.(StorageInfo)
 	return datastore.NewKey(ctx, MakeRecordTable(si), si.ID.(string), 0, nil)
@@ -59,7 +60,7 @@ func GetStorageInfo(req *http.Request) (struct {
 	ok := true
 
 	if i := req.FormValue("Domain"); i != "" {
-		si.Domain = i
+		si.Domain = strings.Replace(i, `"`, "", -1)
 	} else {
 		ok = false
 	}
@@ -91,7 +92,7 @@ func SelectStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	if !ok {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
-			Reason: "Missing Paramters, check documentation.",
+			Reason: "Missing Parameters, check documentation.",
 			Code:   http.StatusNotAcceptable,
 		}, sinfo)
 		return
@@ -139,7 +140,7 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	if !ok {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
-			Reason: "Missing Paramters, check documentation.",
+			Reason: "Missing Parameters, check documentation.",
 			Code:   http.StatusNotAcceptable,
 		}, sinfo)
 		return
@@ -233,7 +234,7 @@ func SelectAllFromRecord(res http.ResponseWriter, req *http.Request, params http
 	if sinfo.Domain == "" {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
-			Reason: "Missing Paramter Domain",
+			Reason: "Missing Parameter Domain",
 			Code:   http.StatusNotAcceptable,
 		}, nil)
 		return
@@ -276,7 +277,7 @@ func SelectCurrentFromRecord(res http.ResponseWriter, req *http.Request, params 
 	if sinfo.Domain == "" {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
-			Reason: "Missing Paramter Domain",
+			Reason: "Missing Parameter Domain",
 			Code:   http.StatusNotAcceptable,
 		}, nil)
 		return
@@ -300,7 +301,7 @@ func SelectCurrentFromRecord(res http.ResponseWriter, req *http.Request, params 
 			ServeJsonOfStruct(res, JsonOptions{
 				Status: "Failure",
 				Reason: qErr.Error(),
-				Code:   500,
+				Code:   501,
 			}, nil)
 			return
 		}
@@ -320,7 +321,7 @@ func DropAllFromRecord(res http.ResponseWriter, req *http.Request, params httpro
 	if sinfo.Domain == "" {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
-			Reason: "Missing Paramter Domain",
+			Reason: "Missing Parameter Domain",
 			Code:   http.StatusNotAcceptable,
 		}, nil)
 		return

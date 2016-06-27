@@ -16,7 +16,7 @@ type User struct {
 	First, Last, UUID string
 }
 
-// Implements: Retrivable
+// Implements: Retrievable
 func (u *User) Key(ctx context.Context, k interface{}) *datastore.Key {
 	si := k.(StorageInfo)
 	return datastore.NewKey(ctx, si.LoginDomain+"-"+UsersTable, si.ID.(string), 0, nil)
@@ -70,7 +70,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request, params httprouter.Pa
 	if udomain == "" {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
-			Reason: "Missing User-Domain paramteter",
+			Reason: "Missing User-Domain parameter",
 			Code:   http.StatusNotAcceptable,
 		}, nil)
 		return
@@ -80,7 +80,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request, params httprouter.Pa
 	if !ok {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
-			Reason: "Missing User paramteters, check documentation.",
+			Reason: "Missing User parameters, check documentation.",
 			Code:   http.StatusNotAcceptable,
 		}, uin)
 		return
@@ -128,7 +128,7 @@ func DropUser(res http.ResponseWriter, req *http.Request, params httprouter.Para
 	if udomain == "" {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
-			Reason: "Missing User-Domain paramteter",
+			Reason: "Missing User-Domain parameter",
 			Code:   http.StatusNotAcceptable,
 		}, nil)
 		return
