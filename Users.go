@@ -89,7 +89,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request, params httprouter.Pa
 	ctx := appengine.NewContext(req) // Make Context
 
 	// Check if user already exists.
-	retErr := retrievable.GetFromDatastore(ctx, StorageInfo{
+	retErr := retrievable.GetEntity(ctx, StorageInfo{
 		LoginDomain: udomain,
 		ID:          uin.UUID,
 	}, &User{})
@@ -102,7 +102,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request, params httprouter.Pa
 		return
 	}
 
-	_, putErr := retrievable.PlaceInDatastore(ctx, StorageInfo{
+	_, putErr := retrievable.PlaceEntity(ctx, StorageInfo{
 		LoginDomain: udomain,
 		ID:          uin.UUID,
 	}, &uin)
@@ -146,10 +146,14 @@ func DropUser(res http.ResponseWriter, req *http.Request, params httprouter.Para
 
 	ctx := appengine.NewContext(req) // Make Context
 
-	delErr := retrievable.DeleteFromDatastore(ctx, StorageInfo{
+	delErr := retrievable.DeleteEntity(ctx, uin.Key(ctx, StorageInfo{
 		LoginDomain: udomain,
 		ID:          uin.UUID,
-	}, &uin)
+	}))
+	// delErr := retrievable.DeleteEntity(ctx, StorageInfo{
+	// 	LoginDomain: udomain,
+	// 	ID:          uin.UUID,
+	// }, &uin)
 	if delErr != nil {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",

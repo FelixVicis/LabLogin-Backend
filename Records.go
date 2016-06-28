@@ -101,7 +101,7 @@ func SelectStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	ctx := appengine.NewContext(req) // Make Context
 
 	// Ensure user exists
-	getErr1 := retrievable.GetFromDatastore(ctx, StorageInfo{
+	getErr1 := retrievable.GetEntity(ctx, StorageInfo{
 		LoginDomain: sinfo.LoginDomain,
 		ID:          sinfo.UUID,
 	}, &User{})
@@ -149,7 +149,7 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	ctx := appengine.NewContext(req) // Make Context
 
 	// Ensure user exists
-	getErr1 := retrievable.GetFromDatastore(ctx, StorageInfo{
+	getErr1 := retrievable.GetEntity(ctx, StorageInfo{
 		LoginDomain: sinfo.LoginDomain,
 		ID:          sinfo.UUID,
 	}, &User{})
