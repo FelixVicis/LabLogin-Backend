@@ -1,6 +1,8 @@
 package main
 
-import ()
+import (
+	"fmt"
+)
 
 /*
 filename.go by Allen J. Mills
@@ -9,8 +11,12 @@ filename.go by Allen J. Mills
     Description
 */
 
-type StorageInfo struct {
+type StorageKey struct {
 	Domain      string
 	LoginDomain string
 	ID          interface{}
+}
+
+func (s StorageKey) ToString() string {
+	return fmt.Sprint(s.Domain, s.LoginDomain, `-`, s.ID)
 }

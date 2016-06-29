@@ -24,22 +24,20 @@ type Record struct {
 	// Key(Live): uuid
 	UUID    string
 	In, Out time.Time
-}
-
-func MakeRecordTable(si StorageInfo) string {
-	return si.Domain + "-" + RecordsTable
+	Domain  string
 }
 
 // Implements: Retrievable
 func (l *Record) Key(ctx context.Context, k interface{}) *datastore.Key {
-	si := k.(StorageInfo)
-	return datastore.NewKey(ctx, MakeRecordTable(si), si.ID.(string), 0, nil)
+	si := k.(StorageKey)
+	return datastore.NewKey(ctx, RecordsTable, si.ToString(), 0, nil)
 }
 
-func NewRecord(uuid string) Record {
+func NewRecord(uuid string, domain string) Record {
 	r := Record{}
 	r.UUID = uuid
 	r.In = time.Now()
+	r.Domain = domain
 	return r
 }
 
@@ -101,7 +99,7 @@ func SelectStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	ctx := appengine.NewContext(req) // Make Context
 
 	// Ensure user exists
-	getErr1 := retrievable.GetEntity(ctx, StorageInfo{
+	getErr1 := retrievable.GetEntity(ctx, StorageKey{
 		LoginDomain: sinfo.LoginDomain,
 		ID:          sinfo.UUID,
 	}, &User{})
@@ -116,7 +114,7 @@ func SelectStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 
 	// Get Record
 	r := Record{}
-	getErr2 := retrievable.GetFromDatastore(ctx, StorageInfo{
+	getErr2 := retrievable.GetFromDatastore(ctx, StorageKey{
 		Domain: sinfo.Domain,
 		ID:     sinfo.UUID,
 	}, &r)
@@ -149,7 +147,7 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	ctx := appengine.NewContext(req) // Make Context
 
 	// Ensure user exists
-	getErr1 := retrievable.GetEntity(ctx, StorageInfo{
+	getErr1 := retrievable.GetEntity(ctx, StorageKey{
 		LoginDomain: sinfo.LoginDomain,
 		ID:          sinfo.UUID,
 	}, &User{})
@@ -164,13 +162,13 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 
 	// Get Record
 	r := Record{}
-	getErr2 := retrievable.GetFromDatastore(ctx, StorageInfo{
+	getErr2 := retrievable.GetFromDatastore(ctx, StorageKey{
 		Domain: sinfo.Domain,
 		ID:     sinfo.UUID,
 	}, &r)
 	if getErr2 != nil { // user is not logged in, lets do that.
-		r = NewRecord(sinfo.UUID)
-		_, putErr1 := retrievable.PlaceInDatastore(ctx, StorageInfo{
+		r = NewRecord(sinfo.UUID, sinfo.Domain)
+		_, putErr1 := retrievable.PlaceInDatastore(ctx, StorageKey{
 			Domain: sinfo.Domain,
 			ID:     sinfo.UUID,
 		}, &r)
@@ -191,7 +189,7 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	// User is logged in, lets move them to logout.
 	r.Out = time.Now()
 
-	delErr1 := retrievable.DeleteFromDatastore(ctx, StorageInfo{
+	delErr1 := retrievable.DeleteFromDatastore(ctx, StorageKey{
 		Domain: sinfo.Domain,
 		ID:     sinfo.UUID,
 	}, &r)
@@ -204,7 +202,7 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 		return
 	}
 
-	_, putErr2 := retrievable.PlaceInDatastore(ctx, StorageInfo{
+	_, putErr2 := retrievable.PlaceInDatastore(ctx, StorageKey{
 		Domain: sinfo.Domain,
 		ID:     fmt.Sprint(r.UUID, "-", r.In),
 	}, &r)
@@ -240,10 +238,8 @@ func SelectAllFromRecord(res http.ResponseWriter, req *http.Request, params http
 		return
 	}
 
-	q := datastore.NewQuery(MakeRecordTable(StorageInfo{
-		Domain: sinfo.Domain,
-	}))
-	q = q.Order("In").Order("UUID")
+	q := datastore.NewQuery(RecordsTable)
+	q = q.Filter("Domain =", sinfo.Domain).Order("In").Order("UUID")
 
 	ctx := appengine.NewContext(req) // Make Context
 
@@ -283,10 +279,8 @@ func SelectCurrentFromRecord(res http.ResponseWriter, req *http.Request, params 
 		return
 	}
 
-	q := datastore.NewQuery(MakeRecordTable(StorageInfo{
-		Domain: sinfo.Domain,
-	}))
-	q = q.Filter("Out =", time.Time{})
+	q := datastore.NewQuery(RecordsTable)
+	q = q.Filter("Domain =", sinfo.Domain).Filter("Out =", time.Time{})
 	q = q.Order("In").Order("UUID")
 
 	ctx := appengine.NewContext(req) // Make Context
@@ -327,9 +321,7 @@ func DropAllFromRecord(res http.ResponseWriter, req *http.Request, params httpro
 		return
 	}
 
-	q := datastore.NewQuery(MakeRecordTable(StorageInfo{
-		Domain: sinfo.Domain,
-	})).KeysOnly()
+	q := datastore.NewQuery(RecordsTable).Filter("Domain =", sinfo.Domain).KeysOnly()
 
 	ctx := appengine.NewContext(req) // Make Context
 

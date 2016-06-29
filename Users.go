@@ -18,8 +18,8 @@ type User struct {
 
 // Implements: Retrievable
 func (u *User) Key(ctx context.Context, k interface{}) *datastore.Key {
-	si := k.(StorageInfo)
-	return datastore.NewKey(ctx, si.LoginDomain+"-"+UsersTable, si.ID.(string), 0, nil)
+	si := k.(StorageKey)
+	return datastore.NewKey(ctx, UsersTable, si.ToString(), 0, nil)
 }
 
 /////=========================
@@ -89,7 +89,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request, params httprouter.Pa
 	ctx := appengine.NewContext(req) // Make Context
 
 	// Check if user already exists.
-	retErr := retrievable.GetEntity(ctx, StorageInfo{
+	retErr := retrievable.GetEntity(ctx, StorageKey{
 		LoginDomain: udomain,
 		ID:          uin.UUID,
 	}, &User{})
@@ -102,7 +102,7 @@ func CreateUser(res http.ResponseWriter, req *http.Request, params httprouter.Pa
 		return
 	}
 
-	_, putErr := retrievable.PlaceEntity(ctx, StorageInfo{
+	_, putErr := retrievable.PlaceEntity(ctx, StorageKey{
 		LoginDomain: udomain,
 		ID:          uin.UUID,
 	}, &uin)
@@ -146,7 +146,7 @@ func DropUser(res http.ResponseWriter, req *http.Request, params httprouter.Para
 
 	ctx := appengine.NewContext(req) // Make Context
 
-	delErr := retrievable.DeleteEntity(ctx, uin.Key(ctx, StorageInfo{
+	delErr := retrievable.DeleteEntity(ctx, uin.Key(ctx, StorageKey{
 		LoginDomain: udomain,
 		ID:          uin.UUID,
 	}))
