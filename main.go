@@ -15,6 +15,7 @@ func init() {
 	r.POST("/create table user", CreateTableUser)
 	r.POST("/insert into user", CreateUser)
 	r.POST("/drop from user", DropUser)
+	r.POST("/select name from user", QueryUser)
 	// Client Commands
 	r.POST("/get new client", RegisterClient)
 	// Record Commands
@@ -30,6 +31,7 @@ func init() {
 	r.GET("/create table user", CreateTableUser)
 	r.GET("/insert into user", CreateUser)
 	r.GET("/drop from user", DropUser)
+	r.GET("/select name from user", QueryUser)
 	// Client Commands
 	r.GET("/get new client", RegisterClient)
 	// Record Commands

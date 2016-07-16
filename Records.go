@@ -147,10 +147,11 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	ctx := appengine.NewContext(req) // Make Context
 
 	// Ensure user exists
+	u := User{}
 	getErr1 := retrievable.GetEntity(ctx, StorageKey{
 		LoginDomain: sinfo.LoginDomain,
 		ID:          sinfo.UUID,
-	}, &User{})
+	}, &u)
 	if getErr1 != nil {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
@@ -183,7 +184,13 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Success",
-		}, "User is Logged In")
+		}, struct {
+			Status string
+			User
+		}{
+			"User is Logged In",
+			u,
+		})
 		return
 	}
 	// User is logged in, lets move them to logout.
@@ -217,7 +224,13 @@ func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 
 	ServeJsonOfStruct(res, JsonOptions{
 		Status: "Success",
-	}, "User is Logged out")
+	}, struct {
+		Status string
+		User
+	}{
+		"User is Logged out",
+		u,
+	})
 }
 
 /////////===================================

@@ -167,3 +167,48 @@ func DropUser(res http.ResponseWriter, req *http.Request, params httprouter.Para
 		Status: "Success",
 	}, nil)
 }
+
+func QueryUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
+
+	// Get parameter Domain
+	udomain := req.FormValue("User-Domain")
+	if udomain == "" {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: "Missing User-Domain parameter",
+			Code:   http.StatusNotAcceptable,
+		}, nil)
+		return
+	}
+
+	uin, _ := GetUserInfo(req)
+	if uin.UUID == "" {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: "Missing UUID parameter.",
+			Code:   http.StatusNotAcceptable,
+		}, nil)
+		return
+	}
+
+	ctx := appengine.NewContext(req) // Make Context
+
+	getErr := retrievable.GetEntity(ctx, uin.Key(ctx, StorageKey{
+		LoginDomain: udomain,
+		ID:          uin.UUID,
+	}), &uin)
+
+	if getErr != nil {
+		ServeJsonOfStruct(res, JsonOptions{
+			Status: "Failure",
+			Reason: getErr.Error(),
+			Code:   http.StatusInternalServerError,
+		}, nil)
+		return
+	}
+
+	ServeJsonOfStruct(res, JsonOptions{
+		Status: "Success",
+	}, uin)
+}
