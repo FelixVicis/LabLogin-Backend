@@ -14,6 +14,13 @@ import (
 	"net/http"
 )
 
+func Init_ClientRoutes(r *httprouter.Router, Debugging bool) {
+	r.POST("/newClientDomain", RegisterClient)
+	if Debugging {
+		r.GET("/newClientDomain", RegisterClient)
+	}
+}
+
 func NewUUID() string {
 	u4, _ := uuid.NewV4()
 	return u4.String()

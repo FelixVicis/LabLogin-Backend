@@ -82,6 +82,21 @@ func GetStorageInfo(req *http.Request) (struct {
 // Handlers
 ////
 
+func Init_RecordRoutes(r *httprouter.Router, Debugging bool) {
+	r.POST("/checkLogin", SelectStateFromRecord)
+	r.POST("/toggleLogin", ToggleStateFromRecord)
+	r.POST("/getAllRecords", SelectAllFromRecord)
+	r.POST("/getCurrentRecords", SelectCurrentFromRecord)
+	r.POST("/deleteRecords", DropAllFromRecord)
+	if Debugging {
+		r.GET("/checkLogin", SelectStateFromRecord)
+		r.GET("/toggleLogin", ToggleStateFromRecord)
+		r.GET("/getAllRecords", SelectAllFromRecord)
+		r.GET("/getCurrentRecords", SelectCurrentFromRecord)
+		r.GET("/deleteRecords", DropAllFromRecord)
+	}
+}
+
 func SelectStateFromRecord(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
 
@@ -99,10 +114,11 @@ func SelectStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	ctx := appengine.NewContext(req) // Make Context
 
 	// Ensure user exists
+	u := User{}
 	getErr1 := retrievable.GetEntity(ctx, StorageKey{
 		LoginDomain: sinfo.LoginDomain,
 		ID:          sinfo.UUID,
-	}, &User{})
+	}, &u)
 	if getErr1 != nil {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Failure",
@@ -121,13 +137,19 @@ func SelectStateFromRecord(res http.ResponseWriter, req *http.Request, params ht
 	if getErr2 != nil {
 		ServeJsonOfStruct(res, JsonOptions{
 			Status: "Success",
-		}, "User Not Logged In")
+		}, struct {
+			Status string
+			User
+		}{"User Not Logged In", u})
 		return
 	}
 
 	ServeJsonOfStruct(res, JsonOptions{
 		Status: "Success",
-	}, "User Logged In")
+	}, struct {
+		Status string
+		User
+	}{"User Logged In", u})
 }
 
 func ToggleStateFromRecord(res http.ResponseWriter, req *http.Request, params httprouter.Params) {

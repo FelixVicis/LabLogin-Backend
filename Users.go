@@ -13,7 +13,7 @@ import (
 
 type User struct {
 	// Key: UUID
-	First, Last, UUID string
+	First, Last, Email, UUID string
 }
 
 // Implements: Retrievable
@@ -42,6 +42,12 @@ func GetUserInfo(req *http.Request) (User, bool) {
 		ok = false
 	}
 
+	if n := req.FormValue("Email"); n != "" {
+		u.Email = n
+	} else {
+		ok = false
+	}
+
 	if i := req.FormValue("UUID"); i != "" {
 		u.UUID = i
 	} else {
@@ -54,6 +60,19 @@ func GetUserInfo(req *http.Request) (User, bool) {
 //////----------------
 // Handlers
 /////
+
+func Init_UserRoutes(r *httprouter.Router, Debugging bool) {
+	r.POST("/newUserDomain", CreateTableUser)
+	r.POST("/addUser", CreateUser)
+	r.POST("/deleteUser", DropUser)
+	r.POST("/getInfoFromUser", QueryUser)
+	if Debugging {
+		r.GET("/newUserDomain", CreateTableUser)
+		r.GET("/addUser", CreateUser)
+		r.GET("/deleteUser", DropUser)
+		r.GET("/getInfoFromUser", QueryUser)
+	}
+}
 
 func CreateTableUser(res http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	res.Header().Set("Access-Control-Allow-Origin", "*") // Allow for outside access.
