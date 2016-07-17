@@ -213,10 +213,10 @@ func QueryUser(res http.ResponseWriter, req *http.Request, params httprouter.Par
 
 	ctx := appengine.NewContext(req) // Make Context
 
-	getErr := retrievable.GetEntity(ctx, uin.Key(ctx, StorageKey{
+	getErr := retrievable.GetEntity(ctx, StorageKey{
 		LoginDomain: udomain,
 		ID:          uin.UUID,
-	}), &uin)
+	}, &uin)
 
 	if getErr != nil {
 		ServeJsonOfStruct(res, JsonOptions{
